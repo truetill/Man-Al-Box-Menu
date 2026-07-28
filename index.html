@@ -279,10 +279,15 @@ const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-mo
 const menuEl = document.getElementById("menu");
 
 function waLink(){
-  const t = T[lang];
-  const lines = MENU.filter(m => cart[m.id] > 0)
-    .map(m => "• " + (lang==="ar"?m.ar:m.en) + " × " + cart[m.id]);
-  const msg = t.msgHeader + "\n\n" + lines.join("\n") + "\n\n" + t.msgFooter;
+  // WhatsApp order message is always in Arabic, regardless of the site language.
+  const items = MENU.filter(m => cart[m.id] > 0);
+  const lines = items.map(m => "• " + m.ar + " × " + cart[m.id]);
+  const total = items.reduce((s,m) => s + m.price * cart[m.id], 0);
+  const msg = "طلب جديد — منقل بوكس"
+    + "\n\n" + lines.join("\n")
+    + "\n\nالمجموع: " + fmt(total) + " ل.ل"
+    + "\nالسعر لا يشمل التوصيل"
+    + "\n\nأُرسل من القائمة الإلكترونية";
   return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
 }
 
