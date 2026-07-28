@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Man'al Box — Lebanese BBQ</title>
+<meta name="description" content="Man'al Box — ready-to-grill Lebanese BBQ boxes. Order on WhatsApp." />
+
+<!-- WhatsApp / social preview card -->
+<meta property="og:title" content="Man'al Box — Lebanese BBQ" />
+<meta property="og:description" content="Ready-to-grill Lebanese BBQ boxes. Tap to order on WhatsApp." />
+<meta property="og:type" content="website" />
+<!-- once deployed, make this an absolute URL, e.g. https://YOURSITE.vercel.app/preview.jpg -->
+<meta property="og:image" content="preview.jpg" />
+<meta name="theme-color" content="#c81e1e" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+  /* =========================================================
+     The only parts you need to edit are marked in the <script>:
+       1) WHATSAPP_NUMBER
+       2) MENU array (names / prices / descriptions / img)
+       3) ABOUT text
+     Animations are layered on top of the approved design below —
+     they do not change any colors, fonts, spacing or layout.
+     ========================================================= */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    color:#fafafa;background:#0d0d0d;min-height:100vh;
+  }
+  body[dir="rtl"]{font-family:'Cairo',sans-serif}
+  a,button{transition:transform .12s ease, filter .12s ease}
+  a:active,button:active{transform:scale(.97)}
+  img{display:block;max-width:100%}
+
+  .page{display:flex;flex-direction:column;min-height:100vh;transition:opacity .18s ease}
+  .page.lang-fade{opacity:0}
+  .wrap{max-width:1200px;margin:0 auto;width:100%;padding-inline:clamp(16px,4vw,64px)}
+
+  /* header */
+  .hero{background:linear-gradient(160deg,#c81e1e,#7a0f0f);
+    padding-top:clamp(30px,5vw,60px);padding-bottom:clamp(26px,4vw,44px);
+    position:relative;overflow:hidden}
+  /* subtle slow-drifting red glow behind the header */
+  .hero::after{content:"";position:absolute;top:-40%;left:-12%;width:55%;height:180%;
+    background:radial-gradient(circle at center, rgba(255,96,74,.55), rgba(255,96,74,0) 62%);
+    filter:blur(18px);pointer-events:none;z-index:0;
+    animation:drift 15s ease-in-out infinite}
+  .hero .wrap{position:relative;z-index:1}
+  .hero-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .brand{font-weight:800;font-size:clamp(30px,5vw,54px);letter-spacing:-.5px}
+  .tagline{font-size:clamp(13px,1.5vw,17px);opacity:.9;margin-top:6px}
+  .langbtn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;
+    padding:8px 18px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;
+    font-family:inherit;backdrop-filter:blur(4px)}
+
+  /* menu */
+  main{padding-block:clamp(18px,3vw,36px)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:clamp(14px,2.5vw,28px)}
+  .card{background:#181818;border:1px solid #262626;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;
+    opacity:0;transform:translateY(18px);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.22,1,.36,1), box-shadow .3s ease;
+    transition-delay:calc(var(--i,0) * 70ms)}
+  .card.in{opacity:1;transform:none}
+  .card.in:hover{transform:translateY(-6px);box-shadow:0 14px 32px rgba(0,0,0,.45)}
+  .imgbox{aspect-ratio:4/3;background:#1a1a1a;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .imgbox img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease, transform .6s ease}
+  .imgbox img.loaded{opacity:1}
+  .card.in:hover .imgbox img{transform:scale(1.05)}
+  .imgbox svg{width:42%;height:42%;stroke:rgba(255,255,255,.35)}
+  /* image loading shimmer until each photo loads */
+  .imgbox.loading::before{content:"";position:absolute;inset:0;z-index:0;
+    background:linear-gradient(100deg,#181818 25%,#242424 45%,#181818 65%);
+    background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+  .cbody{padding:16px 18px;display:flex;flex-direction:column;flex:1}
+  .name{font-size:19px;font-weight:700}
+  .desc{font-size:14px;color:#bdbdbd;margin:6px 0 14px;line-height:1.5;flex:1}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .price{font-size:15px;color:#ff6b6b;font-weight:600}
+
+  .stepper{display:flex;align-items:center;gap:10px}
+  .qbtn{width:36px;height:36px;border-radius:18px;border:none;background:#e23b3b;color:#fff;
+    font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .qbtn.minus{background:rgba(255,255,255,.14)}
+  .addbtn{width:auto;padding:0 18px}
+  .qbtn.pop{animation:pop .28s ease}
+  .qty{min-width:20px;text-align:center;font-weight:700;font-size:18px}
+  .qty.bump{animation:qroll .3s ease}
+
+  /* footer */
+  footer{background:#0a0a0a;border-top:1px solid rgba(255,255,255,.1);margin-top:auto}
+  .fgrid{display:grid;gap:clamp(20px,3vw,40px);grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    padding-block:clamp(32px,5vw,56px)}
+  .fgrid h3{font-size:22px;margin-bottom:12px;font-weight:800}
+  .fgrid p{font-size:15px;line-height:1.6;color:rgba(250,250,250,.65);max-width:460px}
+  .finfo{display:grid;gap:14px;align-content:start}
+  .flabel{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(250,250,250,.55)}
+  body[dir="rtl"] .flabel{text-transform:none}
+  .fval{font-size:16px;font-weight:600}
+  .fsocials{display:flex;gap:12px}
+  .fsocials a{color:#fafafa;text-decoration:none;font-weight:600;font-size:15px;border-bottom:2px solid rgba(255,255,255,.18)}
+  .copyright{border-top:1px solid rgba(255,255,255,.08);padding:16px 24px;text-align:center;
+    font-size:13px;color:rgba(250,250,250,.55)}
+
+  /* order bar */
+  .orderbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#181818;
+    border-top:1px solid rgba(255,255,255,.12);box-shadow:0 -6px 24px rgba(0,0,0,.4);display:block;
+    transform:translateY(130%);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+  .orderbar.show{transform:translateY(0)}
+  .orderbar .inner{max-width:1200px;margin:0 auto;padding:12px clamp(16px,4vw,64px);
+    display:flex;align-items:center;gap:16px}
+  .count{color:#fff;font-size:15px;white-space:nowrap}
+  .count b{font-size:20px;display:inline-block}
+  .count b.bump{animation:qroll .3s ease}
+  .orderlink{flex:1;max-width:420px;margin-inline-start:auto;text-align:center;background:#25D366;
+    color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:13px 0;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    animation:waPulse 2.4s ease-in-out infinite}
+  body.cart-open{padding-bottom:80px}
+
+  /* ---------- keyframes (layered on, no design change) ---------- */
+  @keyframes drift{
+    0%{transform:translate(-8%,-8%)}
+    50%{transform:translate(10%,6%)}
+    100%{transform:translate(-8%,-8%)}
+  }
+  @keyframes shimmer{
+    0%{background-position:200% 0}
+    100%{background-position:-200% 0}
+  }
+  @keyframes pop{
+    0%{transform:scale(1)}
+    40%{transform:scale(1.32)}
+    100%{transform:scale(1)}
+  }
+  @keyframes qroll{
+    0%{transform:translateY(-.55em);opacity:0}
+    100%{transform:translateY(0);opacity:1}
+  }
+  @keyframes waPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.45)}
+    50%{box-shadow:0 0 0 12px rgba(37,211,102,0)}
+  }
+
+  /* ---------- respect reduced-motion ---------- */
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important}
+    .page{transition:none}
+    .card{opacity:1;transform:none;transition:none}
+    .card.in:hover{transform:none;box-shadow:none}
+    .card.in:hover .imgbox img{transform:none}
+    .imgbox img{opacity:1;transition:none}
+    .orderbar{transition:none}
+    .hero::after{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <div class="brand" id="brand">Man'al Box</div>
+        <div class="tagline" id="tagline"></div>
+      </div>
+      <button class="langbtn" id="langbtn" onclick="toggleLang()"></button>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="grid" id="menu"></div>
+  </main>
+
+  <footer>
+    <div class="wrap fgrid">
+      <div>
+        <h3 id="aboutTitle"></h3>
+        <p id="aboutBody"></p>
+      </div>
+      <div class="finfo">
+        <div><div class="flabel" id="hoursLabel"></div><div class="fval" id="hoursVal"></div></div>
+        <div><div class="flabel" id="locLabel"></div><div class="fval" id="locVal"></div></div>
+        <div>
+          <div class="flabel" id="followLabel" style="margin-bottom:6px"></div>
+          <div class="fsocials">
+            <a id="igLink" target="_blank" rel="noreferrer">Instagram</a>
+            <a id="waLink" target="_blank" rel="noreferrer">WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="copyright" id="copyright"></div>
+  </footer>
+</div>
+
+<div class="orderbar" id="orderbar">
+  <div class="inner">
+    <div class="count"><b id="cartCount">0</b> <span id="cartWord"></span></div>
+    <a class="orderlink" id="orderLink" target="_blank" rel="noreferrer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.5-.8-2.5-1.4-3.5-3.1-.3-.5.3-.4.8-1.4.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2z"/></svg>
+      <span id="orderText"></span>
+    </a>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   1) SET THE RESTAURANT WHATSAPP NUMBER HERE
+      International format, digits only — no +, no spaces.
+      Lebanon example: "9613123456"
+   ========================================================= */
+const WHATSAPP_NUMBER = "961XXXXXXXX";
+const INSTAGRAM = "https://www.instagram.com/man2albox.lb";
+
+/* =========================================================
+   2) MENU — edit names / prices / descriptions.
+      Put a photo URL in `img` (or leave "" for placeholder).
+      You said you'll add descriptions + images later — just
+      fill dEn/dAr and img for each item when ready.
+   ========================================================= */
+const MENU = [
+  { id:"beef",    en:"Beef Box",    ar:"بوكس لحمة",  price:1700000, img:"box.jpg",
+    dEn:"6 beef skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ لحم مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"kafta",   en:"Kafta Box",   ar:"بوكس كفتة",  price:1400000, img:"box.jpg",
+    dEn:"6 kafta skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ كفتة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"makanek", en:"Makanek Box", ar:"بوكس مقانق", price:1400000, img:"box.jpg",
+    dEn:"6 makanek skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ مقانق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"sejouk",  en:"Sejouk Box",  ar:"بوكس سجق",   price:1400000, img:"box.jpg",
+    dEn:"6 sejouk skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ سجق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"tawouk",  en:"Tawouk Box",  ar:"بوكس طاووق", price:1250000, img:"box.jpg",
+    dEn:"6 tawouk skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ طاووق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"mixed",   en:"Mixed Box",   ar:"بوكس مشكّل", price:1500000, img:"box.jpg",
+    dEn:"6 mixed skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ مشكّلة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+];
+
+/* =========================================================
+   3) ABOUT / FOOTER text
+   ========================================================= */
+const ABOUT = {
+  en:{ title:"About Man'al Box",
+    body:"Man'al Box introduces a fresh new concept in Lebanese BBQ — your complete grilling experience, packed and ready to go wherever you are. Whether you're heading to the beach, planning a picnic, gathering with friends, or enjoying a spontaneous BBQ night, Man'al Box brings everything together in one convenient package. Just open the box, light the charcoal, grill your favorites, and enjoy the moment. It's more than a meal — it's the full Lebanese BBQ experience, made portable, practical, and ready whenever you are.",
+    hoursLabel:"Hours", hours:"Daily · 11:00 – 23:00",
+    locLabel:"Location", loc:"North Lebanon", followLabel:"Follow us" },
+  ar:{ title:"عن منقل بوكس",
+    body:"منقل بوكس يقدّم مفهومًا جديدًا للمشاوي اللبنانية — تجربة شوي متكاملة، مجهّزة وجاهزة أينما كنت. سواء كنت ذاهبًا إلى البحر، تخطّط لنزهة، تجتمع مع الأصدقاء، أو تستمتع بليلة شواء عفوية، منقل بوكس يجمع كل شيء في عبوة واحدة. فقط افتح الصندوق، أشعل الفحم، اشوِ ما تحب، واستمتع باللحظة. إنها أكثر من مجرد وجبة — إنها تجربة المشاوي اللبنانية الكاملة، محمولة وعملية وجاهزة متى ما أردت.",
+    hoursLabel:"أوقات العمل", hours:"يوميًا · ١١:٠٠ – ٢٣:٠٠",
+    locLabel:"الموقع", loc:"شمال لبنان", followLabel:"تابعونا" },
+};
+
+const T = {
+  en:{ tagline:"Lebanese BBQ · grill-at-home boxes", order:"Order on WhatsApp",
+    each:"L.L", items:"boxes", langBtn:"عربي",
+    msgHeader:"New order — Man'al Box", msgFooter:"Sent from the online menu",
+    copyright:"All rights reserved" },
+  ar:{ tagline:"مشاوي لبنانية · بوكسات شوي بالبيت", order:"اطلب عبر واتساب",
+    each:"ل.ل", items:"بوكس", langBtn:"EN",
+    msgHeader:"طلب جديد — منقل بوكس", msgFooter:"أُرسل من القائمة الإلكترونية",
+    copyright:"جميع الحقوق محفوظة" },
+};
+
+// ---- state ----
+let lang = (navigator.language || "en").startsWith("ar") ? "ar" : "en";
+const cart = {};
+const fmt = n => n.toLocaleString("en-US").replace(/,/g,".");
+const PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M6 3v6a3 3 0 006 0V3M9 3v18M15 3c-1 3-1 6 0 8v10" stroke-linecap="round"/></svg>';
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const menuEl = document.getElementById("menu");
+
+function waLink(){
+  const t = T[lang];
+  const lines = MENU.filter(m => cart[m.id] > 0)
+    .map(m => "• " + (lang==="ar"?m.ar:m.en) + " × " + cart[m.id]);
+  const msg = t.msgHeader + "\n\n" + lines.join("\n") + "\n\n" + t.msgFooter;
+  return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
+}
+
+// ---- one card's stepper (rebuilt in place on +/- so the rest of the card is untouched) ----
+function stepperHTML(m){
+  const q = cart[m.id] || 0;
+  return q === 0
+    ? '<button class="qbtn addbtn plus" onclick="inc(\''+m.id+'\')">+</button>'
+    : '<div class="stepper">'
+      + '<button class="qbtn minus" onclick="dec(\''+m.id+'\')">−</button>'
+      + '<span class="qty">'+q+'</span>'
+      + '<button class="qbtn plus" onclick="inc(\''+m.id+'\')">+</button></div>';
+}
+
+// ---- image shimmer helper ----
+function imgLoaded(img){
+  img.classList.add("loaded");
+  const box = img.closest(".imgbox");
+  if(box) box.classList.remove("loading");
+}
+
+// ---- build the whole grid once (and on language change) ----
+let io;
+function buildMenu(instant){
+  const t = T[lang], isAr = lang==="ar";
+  menuEl.innerHTML = MENU.map((m,i) => {
+    const desc = (isAr?m.dAr:m.dEn) || "";
+    const name = isAr?m.ar:m.en;
+    const img = m.img
+      ? '<img src="'+m.img+'" alt="'+name+'" onload="imgLoaded(this)">'
+      : PLACEHOLDER_SVG;
+    const boxClass = m.img ? "imgbox loading" : "imgbox";
+    return '<article class="card" data-id="'+m.id+'" style="--i:'+i+'">'
+      + '<div class="'+boxClass+'">'+img+'</div>'
+      + '<div class="cbody">'
+        + '<div class="name">'+name+'</div>'
+        + (desc ? '<p class="desc">'+desc+'</p>' : '<div style="flex:1"></div>')
+        + '<div class="row"><div class="price">'+fmt(m.price)+' '+t.each+'</div>'
+          + '<div class="stepslot">'+stepperHTML(m)+'</div></div>'
+      + '</div></article>';
+  }).join("");
+
+  // cached images may already be complete → mark them loaded so shimmer clears
+  menuEl.querySelectorAll("img").forEach(img => {
+    if(img.complete && img.naturalWidth) imgLoaded(img);
+  });
+
+  // reveal: stagger on first paint, instant when just switching language
+  const cards = [...menuEl.querySelectorAll(".card")];
+  if(instant || reduceMotion || !("IntersectionObserver" in window)){
+    cards.forEach(c => c.classList.add("in"));
+    return;
+  }
+  if(io) io.disconnect();
+  io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, {threshold:.12, rootMargin:"0px 0px -40px 0px"});
+  cards.forEach(c => io.observe(c));
+}
+
+// ---- language-dependent text outside the grid ----
+function applyText(){
+  const t = T[lang], a = ABOUT[lang], isAr = lang==="ar";
+  document.body.dir = isAr ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+
+  document.getElementById("brand").textContent = isAr ? "منقل بوكس" : "Man'al Box";
+  document.getElementById("tagline").textContent = t.tagline;
+  document.getElementById("langbtn").textContent = t.langBtn;
+
+  document.getElementById("aboutTitle").textContent = a.title;
+  document.getElementById("aboutBody").textContent = a.body;
+  document.getElementById("hoursLabel").textContent = a.hoursLabel;
+  document.getElementById("hoursVal").textContent = a.hours;
+  document.getElementById("locLabel").textContent = a.locLabel;
+  document.getElementById("locVal").textContent = a.loc;
+  document.getElementById("followLabel").textContent = a.followLabel;
+  document.getElementById("igLink").href = INSTAGRAM;
+  document.getElementById("waLink").href = "https://wa.me/" + WHATSAPP_NUMBER;
+  document.getElementById("copyright").textContent =
+    "© " + new Date().getFullYear() + " Man'al Box · " + t.copyright;
+}
+
+function updateBar(){
+  const t = T[lang];
+  const count = Object.values(cart).reduce((s,n)=>s+n,0);
+  const bar = document.getElementById("orderbar");
+  const countEl = document.getElementById("cartCount");
+  if(countEl.textContent !== String(count) && !reduceMotion){
+    countEl.classList.remove("bump"); void countEl.offsetWidth; countEl.classList.add("bump");
+  }
+  countEl.textContent = count;
+  document.getElementById("cartWord").textContent = t.items;
+  document.getElementById("orderText").textContent = t.order;
+  document.getElementById("orderLink").href = waLink();
+  bar.dir = document.body.dir;
+  if(count > 0){ bar.classList.add("show"); document.body.classList.add("cart-open"); }
+  else { bar.classList.remove("show"); document.body.classList.remove("cart-open"); }
+}
+
+// ---- update only the affected card (keeps hover/scroll state + lets us animate) ----
+function refreshCard(id, grew){
+  const card = menuEl.querySelector('[data-id="'+id+'"]');
+  if(!card) return;
+  const slot = card.querySelector(".stepslot");
+  const m = MENU.find(x => x.id === id);
+  slot.innerHTML = stepperHTML(m);
+  if(reduceMotion) return;
+  const qty = slot.querySelector(".qty");
+  if(qty){ qty.classList.remove("bump"); void qty.offsetWidth; qty.classList.add("bump"); }
+  if(grew){
+    const plus = slot.querySelector(".plus");
+    if(plus){ plus.classList.remove("pop"); void plus.offsetWidth; plus.classList.add("pop"); }
+  }
+}
+
+function inc(id){ cart[id] = (cart[id]||0)+1; refreshCard(id, true);  updateBar(); }
+function dec(id){ cart[id] = Math.max(0,(cart[id]||0)-1); refreshCard(id, false); updateBar(); }
+
+function toggleLang(){
+  lang = lang==="ar" ? "en" : "ar";
+  const page = document.querySelector(".page");
+  if(reduceMotion){ applyText(); buildMenu(true); updateBar(); return; }
+  page.classList.add("lang-fade");            // smooth EN↔AR crossfade
+  setTimeout(() => {
+    applyText();
+    buildMenu(true);                          // clean RTL/LTR swap under the fade
+    updateBar();
+    page.classList.remove("lang-fade");
+  }, 180);
+}
+
+// ---- initial paint ----
+applyText();
+buildMenu(false);
+updateBar();
+</script>
+</body>
+</html>
