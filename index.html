@@ -375,8 +375,8 @@ const T = {
     cartTitle:"Your order", addMore:"Add more",
     emptyCart:"Your cart is empty", remove:"Remove", edit:"Edit",
     pickSalad:"Please choose a salad", pickSix:"Choose exactly 6 skewers",
-    msgHeader:"New order — Man'al Box", saladLbl:"salad", extraLbl:"extra shish",
-    skewersLbl:"skewers", totalLbl:"Total", noDelivery:"Price does not include delivery",
+    msgHeader:"New order — Man'al Box", saladLbl:"Salad", extraLbl:"Extra shish",
+    skewersLbl:"Skewers", totalLbl:"Total", noDelivery:"Price does not include delivery",
     thanks:"Thanks! We'll contact you to confirm your order 🔥", listSep:", " },
   ar:{ tagline:"مشاوي لبنانية · بوكسات شوي بالبيت", order:"اطلب عبر واتساب",
     each:"ل.ل", items:"عناصر", langBtn:"EN", copyright:"جميع الحقوق محفوظة",
@@ -422,31 +422,42 @@ function orderTotal(){
   DRINKS.forEach(d => { sum += (drinks[d.id]||0) * d.price; });
   return sum;
 }
-// one box line as text (shared by cart + WhatsApp message), localized
+// collapse repeated meat types into "Nx Name" (kept in menu order), localized
+function collapseTypes(ids){
+  const counts = {};
+  ids.forEach(id => counts[id] = (counts[id]||0) + 1);
+  return SHISH.filter(s => counts[s.id]).map(s => counts[s.id] + "x " + nameOf(s)).join(T[lang].listSep);
+}
+// one box line as a single-line summary (used by the cart), localized + collapsed
 function boxLineText(line){
-  const t = T[lang], sep = t.listSep, b = boxById(line.id);
+  const t = T[lang], b = boxById(line.id);
   let s = nameOf(b);
-  if(line.skewers) s += " — " + t.skewersLbl + ": " + line.skewers.map(id => nameOf(shishById(id))).join(sep);
+  if(line.skewers) s += " — " + t.skewersLbl + ": " + collapseTypes(line.skewers);
   s += " — " + t.saladLbl + ": " + nameOf(saladById(line.salad));
-  if(line.extras.length){
-    const counts = {};
-    line.extras.forEach(x => counts[x] = (counts[x]||0) + 1);
-    const ex = Object.entries(counts).map(([id,n]) => nameOf(shishById(id)) + (n>1 ? " ×"+n : "")).join(sep);
-    s += " + " + t.extraLbl + ": " + ex;
-  }
+  if(line.extras.length) s += " + " + t.extraLbl + ": " + collapseTypes(line.extras);
   return s;
 }
-function orderLines(){
-  const lines = boxLines.map(line => "• " + boxLineText(line));
-  DRINKS.forEach(d => { const q = drinks[d.id]||0; if(q>0) lines.push("• " + nameOf(d) + " × " + q); });
-  return lines;
-}
 
-// ---- WhatsApp deep link (localized; items + choices + qty, plus total, delivery note, thanks) ----
+// ---- WhatsApp deep link (localized, friendly multi-line; items + choices + qty,
+//      plus total, delivery note, thanks). Repeated meat is collapsed to "Nx Name". ----
 function waLink(){
   const t = T[lang];
+  const D = "   – ";   // detail line: small indent + dash, each choice on its own line
+  const boxBlocks = boxLines.map(line => {
+    const b = boxById(line.id);
+    const rows = ["• " + nameOf(b)];
+    if(line.skewers) rows.push(D + t.skewersLbl + ": " + collapseTypes(line.skewers));
+    rows.push(D + t.saladLbl + ": " + nameOf(saladById(line.salad)));
+    if(line.extras.length) rows.push(D + t.extraLbl + ": " + collapseTypes(line.extras));
+    return rows.join("\n");
+  });
+  const drinkLines = [];
+  DRINKS.forEach(d => { const q = drinks[d.id]||0; if(q>0) drinkLines.push("• " + nameOf(d) + " × " + q); });
+  const sections = [];
+  if(boxBlocks.length)  sections.push(boxBlocks.join("\n\n"));  // blank line between boxes
+  if(drinkLines.length) sections.push(drinkLines.join("\n"));
   const msg = t.msgHeader
-    + "\n\n" + orderLines().join("\n")
+    + "\n\n" + sections.join("\n\n")
     + "\n\n" + t.totalLbl + ": " + fmt(orderTotal()) + " " + t.each
     + "\n" + t.noDelivery
     + "\n\n" + t.thanks;
