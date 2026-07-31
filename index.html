@@ -22,7 +22,7 @@
   /* =========================================================
      The only parts you need to edit are marked in the <script>:
        1) WHATSAPP_NUMBER
-       2) MENU array (names / prices / descriptions / img)
+       2) BOXES / DRINKS arrays (names / prices / descriptions / img)
        3) ABOUT text
      Animations are layered on top of the approved design below —
      they do not change any colors, fonts, spacing or layout.
@@ -87,6 +87,7 @@
   .qbtn{width:36px;height:36px;border-radius:18px;border:none;background:#e23b3b;color:#fff;
     font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
   .qbtn.minus{background:rgba(255,255,255,.14)}
+  .qbtn[disabled]{opacity:.35;cursor:not-allowed}
   .addbtn{width:auto;padding:0 18px}
   .qbtn.pop{animation:pop .28s ease}
   .qty{min-width:20px;text-align:center;font-weight:700;font-size:18px}
@@ -123,6 +124,62 @@
     animation:waPulse 2.4s ease-in-out infinite}
   body.cart-open{padding-bottom:80px}
 
+  /* ---------- new UI: sections, choose button, drinks (reuses existing tokens) ---------- */
+  .sec-title{font-size:clamp(20px,3vw,26px);font-weight:800;margin:clamp(22px,4vw,40px) 0 2px}
+  .cartbtn{background:none;border:none;color:#fff;font:inherit;cursor:pointer;display:flex;
+    align-items:center;gap:7px;padding:0;white-space:nowrap}
+  .cartbtn .caret{font-size:12px;opacity:.7}
+  .choosebtn{width:100%;justify-content:center}
+  .card.drink .cbody{padding:16px 18px}
+  .stepper.sm .qbtn{width:30px;height:30px;font-size:18px}
+
+  /* ---------- modal (configure + cart) ---------- */
+  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,.62);backdrop-filter:blur(2px)}
+  .modal.show{display:flex}
+  @media(min-width:640px){.modal{align-items:center;padding:24px}}
+  .sheet{background:#181818;border:1px solid #262626;width:100%;max-width:520px;max-height:92vh;
+    border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;
+    animation:sheetIn .28s cubic-bezier(.22,1,.36,1)}
+  @media(min-width:640px){.sheet{border-radius:20px}}
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    padding:18px 20px;border-bottom:1px solid #262626}
+  .sheet-title{font-size:20px;font-weight:800}
+  .sheet-price{font-size:14px;color:#ff6b6b;font-weight:600;margin-top:2px}
+  .sheet .x{background:rgba(255,255,255,.1);border:none;color:#fafafa;width:34px;height:34px;
+    border-radius:17px;font-size:22px;line-height:1;cursor:pointer;flex:none;font-family:inherit}
+  .sheet-body{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+  .field-label{font-size:14px;font-weight:700;color:#e6e6e6;margin-bottom:10px;display:flex;
+    align-items:center;gap:8px;flex-wrap:wrap}
+  .opts{display:flex;gap:10px;flex-wrap:wrap}
+  .opt{background:#111;border:1px solid #333;color:#eaeaea;border-radius:12px;padding:10px 18px;
+    font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+  .opt.is-selected{background:#e23b3b;border-color:#e23b3b;color:#fff}
+  .counter{font-size:12px;font-weight:700;background:rgba(255,255,255,.1);color:#bdbdbd;
+    padding:3px 9px;border-radius:10px}
+  .counter.ok{background:rgba(37,211,102,.16);color:#25D366}
+  .cfg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .cfg-row:first-of-type{border-top:none}
+  .cfg-name{font-size:15px}
+  .sheet-foot{padding:14px 20px;border-top:1px solid #262626;display:flex;flex-direction:column;gap:10px}
+  .hint{font-size:13px;color:#ff9b9b}
+  .foot-btns{display:flex;gap:10px}
+  .btn-ghost{flex:none;background:rgba(255,255,255,.12);border:none;color:#fafafa;border-radius:12px;
+    padding:13px 18px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .btn-primary{flex:1;background:#25D366;border:none;color:#fff;border-radius:12px;padding:13px 18px;
+    font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;text-align:center;
+    text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary[disabled]{opacity:.4;cursor:not-allowed}
+  .citem{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}
+  .citem:first-child{border-top:none}
+  .citem-txt{font-size:14px;line-height:1.5;color:#eaeaea}
+  .rm{background:rgba(255,255,255,.1);border:none;color:#ff8080;width:30px;height:30px;flex:none;
+    border-radius:15px;font-size:18px;cursor:pointer;font-family:inherit}
+  .empty{color:#bdbdbd;font-size:15px;text-align:center;padding:24px 0}
+  body.modal-open{overflow:hidden}
+
   /* ---------- keyframes (layered on, no design change) ---------- */
   @keyframes drift{
     0%{transform:translate(-8%,-8%)}
@@ -146,6 +203,10 @@
     0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.45)}
     50%{box-shadow:0 0 0 12px rgba(37,211,102,0)}
   }
+  @keyframes sheetIn{
+    from{transform:translateY(24px);opacity:0}
+    to{transform:none;opacity:1}
+  }
 
   /* ---------- respect reduced-motion ---------- */
   @media (prefers-reduced-motion: reduce){
@@ -157,6 +218,8 @@
     .imgbox img{opacity:1;transition:none}
     .orderbar{transition:none}
     .hero::after{display:none}
+    .sheet{animation:none}
+    .modal{backdrop-filter:none}
   }
 </style>
 </head>
@@ -174,6 +237,8 @@
 
   <main class="wrap">
     <div class="grid" id="menu"></div>
+    <h2 class="sec-title" id="drinksTitle"></h2>
+    <div class="grid" id="drinks"></div>
   </main>
 
   <footer>
@@ -200,12 +265,21 @@
 
 <div class="orderbar" id="orderbar">
   <div class="inner">
-    <div class="count"><b id="cartCount">0</b> <span id="cartWord"></span></div>
+    <button class="count cartbtn" onclick="openCart()"><b id="cartCount">0</b> <span id="cartWord"></span> <span class="caret">▾</span></button>
     <a class="orderlink" id="orderLink" target="_blank" rel="noreferrer">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.5-.8-2.5-1.4-3.5-3.1-.3-.5.3-.4.8-1.4.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2z"/></svg>
       <span id="orderText"></span>
     </a>
   </div>
+</div>
+
+<!-- configure a box (per-unit choices) -->
+<div class="modal" id="configModal" onclick="if(event.target===this)closeConfig()">
+  <div class="sheet" id="configSheet"></div>
+</div>
+<!-- cart / review -->
+<div class="modal" id="cartModal" onclick="if(event.target===this)closeCart()">
+  <div class="sheet" id="cartSheet"></div>
 </div>
 
 <script>
@@ -218,31 +292,61 @@ const WHATSAPP_NUMBER = "96171308437";
 const INSTAGRAM = "https://www.instagram.com/man2albox.lb";
 
 /* =========================================================
-   2) MENU — edit names / prices / descriptions.
-      Put a photo URL in `img` (or leave "" for placeholder).
-      You said you'll add descriptions + images later — just
-      fill dEn/dAr and img for each item when ready.
+   2) MENU DATA — boxes, drinks, and the shared option lists.
+      Every box includes the standard kit; only the skewer
+      type changes. Prices are in Lebanese pounds (L.L).
    ========================================================= */
-const MENU = [ // img: "box.png" — optimized product photo used for all items for now
+const BOXES = [
   { id:"beef",    en:"Beef Box",    ar:"بوكس لحمة",  price:1700000, img:"box.png",
-    dEn:"6 beef skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
-    dAr:"6 أسياخ لحم مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+    dEn:"6 beef skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ لحمة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
   { id:"kafta",   en:"Kafta Box",   ar:"بوكس كفتة",  price:1400000, img:"box.png",
-    dEn:"6 kafta skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dEn:"6 kafta skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ كفتة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
   { id:"makanek", en:"Makanek Box", ar:"بوكس مقانق", price:1400000, img:"box.png",
-    dEn:"6 makanek skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dEn:"6 makanek skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ مقانق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
   { id:"sejouk",  en:"Sejouk Box",  ar:"بوكس سجق",   price:1400000, img:"box.png",
-    dEn:"6 sejouk skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dEn:"6 sejouk skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ سجق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
   { id:"tawouk",  en:"Tawouk Box",  ar:"بوكس طاووق", price:1250000, img:"box.png",
-    dEn:"6 tawouk skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dEn:"6 tawouk skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ طاووق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"mixed",   en:"Mixed Box",   ar:"بوكس مشكّل", price:1500000, img:"box.png",
-    dEn:"6 mixed skewers with tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
-    dAr:"6 أسياخ مشكّلة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"mix",     en:"Mix Box",     ar:"بوكس مكس",   price:1500000, img:"box.png",
+    dEn:"6 skewers: beef, kafta, tawouk. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ: لحمة، كفتة، طاووق. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"mixpro",  en:"Mix Pro Box", ar:"بوكس مكس برو", price:1700000, img:"box.png",
+    dEn:"6 skewers: beef, kafta, tawouk, sejouk, makanek. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"6 أسياخ: لحمة، كفتة، طاووق، سجق، مقانق. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
+  { id:"custom",  en:"Customized Box", ar:"بوكس مخصّص", price:1700000, img:"box.png", custom:true,
+    dEn:"Choose your 6 skewers. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
+    dAr:"اختر 6 أسياخ. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
 ];
+
+// meat types — used for the Customized box and for extra shish add-ons
+const SHISH = [
+  { id:"beef",    en:"Beef",    ar:"لحمة" },
+  { id:"kafta",   en:"Kafta",   ar:"كفتة" },
+  { id:"makanek", en:"Makanek", ar:"مقانق" },
+  { id:"sejouk",  en:"Sejouk",  ar:"سجق" },
+  { id:"tawouk",  en:"Tawouk",  ar:"طاووق" },
+];
+
+const SALADS = [
+  { id:"tabbouleh", en:"Tabbouleh", ar:"تبولة" },
+  { id:"fattoush",  en:"Fattoush",  ar:"فتوش" },
+];
+
+const DRINKS = [
+  { id:"sevenup",     en:"Seven Up",             ar:"سفن أب",     price:100000 },
+  { id:"sevenupzero", en:"Seven Up Zero Sugar",  ar:"سفن أب زيرو", price:100000 },
+  { id:"pepsi",       en:"Pepsi",                ar:"بيبسي",      price:100000 },
+  { id:"pepsidiet",   en:"Pepsi Diet",           ar:"بيبسي دايت", price:100000 },
+  { id:"pepsizero",   en:"Pepsi Zero Sugar",     ar:"بيبسي زيرو", price:100000 },
+  { id:"mirinda",     en:"Mirinda",              ar:"ميرندا",     price:100000 },
+];
+
+const EXTRA_PRICE = 150000;   // per extra shish
 
 /* =========================================================
    3) ABOUT / FOOTER text
@@ -260,46 +364,88 @@ const ABOUT = {
 
 const T = {
   en:{ tagline:"Lebanese BBQ · grill-at-home boxes", order:"Order on WhatsApp",
-    each:"L.L", items:"boxes", langBtn:"عربي",
-    msgHeader:"New order — Man'al Box", msgFooter:"Sent from the online menu",
-    copyright:"All rights reserved" },
+    each:"L.L", items:"items", langBtn:"عربي", copyright:"All rights reserved",
+    drinksTitle:"Drinks", choose:"Choose",
+    saladField:"Choose your salad", extraField:"Extra shish (+150,000 L.L each)",
+    customField:"Build your 6 skewers", ofSix:"of 6",
+    addToCart:"Add to cart", cancel:"Cancel", cartTitle:"Your order", addMore:"Add more",
+    emptyCart:"Your cart is empty", remove:"Remove",
+    pickSalad:"Please choose a salad", pickSix:"Choose exactly 6 skewers",
+    msgHeader:"New order — Man'al Box", saladLbl:"salad", extraLbl:"extra shish",
+    skewersLbl:"skewers", totalLbl:"Total", noDelivery:"Price does not include delivery",
+    thanks:"Thanks! We'll contact you to confirm your order 🔥", listSep:", " },
   ar:{ tagline:"مشاوي لبنانية · بوكسات شوي بالبيت", order:"اطلب عبر واتساب",
-    each:"ل.ل", items:"بوكس", langBtn:"EN",
-    msgHeader:"طلب جديد — منقل بوكس", msgFooter:"أُرسل من القائمة الإلكترونية",
-    copyright:"جميع الحقوق محفوظة" },
+    each:"ل.ل", items:"عناصر", langBtn:"EN", copyright:"جميع الحقوق محفوظة",
+    drinksTitle:"مشروبات", choose:"اختر",
+    saladField:"اختر السلطة", extraField:"شيش إضافي (+150,000 ل.ل للسيخ)",
+    customField:"اختر 6 أسياخ", ofSix:"من 6",
+    addToCart:"أضف إلى السلة", cancel:"إلغاء", cartTitle:"طلبك", addMore:"أضف المزيد",
+    emptyCart:"السلة فارغة", remove:"حذف",
+    pickSalad:"يرجى اختيار السلطة", pickSix:"اختر 6 أسياخ بالضبط",
+    msgHeader:"طلب جديد — منقل بوكس", saladLbl:"سلطة", extraLbl:"شيش إضافي",
+    skewersLbl:"أسياخ", totalLbl:"المجموع", noDelivery:"السعر لا يشمل التوصيل",
+    thanks:"شكراً! رح نتواصل معك لتأكيد الطلب 🔥", listSep:"، " },
 };
 
 // ---- state ----
 let lang = (navigator.language || "en").startsWith("ar") ? "ar" : "en";
-const cart = {};
+let boxLines = [];        // configured box line items: {uid,id,salad,extras[],skewers[]|null}
+let drinks = {};          // drinkId -> qty
+let uidSeq = 1;
+let draft = null;         // in-progress config: {id, salad, extras:{}, skewers:{}}
 const fmt = n => n.toLocaleString("en-US").replace(/,/g,".");
 const PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M6 3v6a3 3 0 006 0V3M9 3v18M15 3c-1 3-1 6 0 8v10" stroke-linecap="round"/></svg>';
 const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const menuEl = document.getElementById("menu");
+// ---- lookups ----
+const boxById   = id => BOXES.find(b => b.id === id);
+const shishById = id => SHISH.find(s => s.id === id);
+const saladById = id => SALADS.find(s => s.id === id);
+const drinkById = id => DRINKS.find(d => d.id === id);
+const nameOf = o => (lang === "ar" ? o.ar : o.en);
 
-function waLink(){
-  // WhatsApp order message is always in Arabic, regardless of the site language.
-  const items = MENU.filter(m => cart[m.id] > 0);
-  const lines = items.map(m => "• " + m.ar + " × " + cart[m.id]);
-  const total = items.reduce((s,m) => s + m.price * cart[m.id], 0);
-  const msg = "طلب جديد — منقل بوكس"
-    + "\n\n" + lines.join("\n")
-    + "\n\nالمجموع: " + fmt(total) + " ل.ل"
-    + "\nالسعر لا يشمل التوصيل"
-    + "\n\nشكراً! رح نتواصل معك لتأكيد الطلب 🔥";
-  return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
+const menuEl   = document.getElementById("menu");
+const drinksEl = document.getElementById("drinks");
+
+// ---- order helpers ----
+function orderCount(){
+  return boxLines.length + DRINKS.reduce((s,d) => s + (drinks[d.id]||0), 0);
+}
+function orderTotal(){
+  let sum = 0;
+  boxLines.forEach(l => { sum += boxById(l.id).price + l.extras.length * EXTRA_PRICE; });
+  DRINKS.forEach(d => { sum += (drinks[d.id]||0) * d.price; });
+  return sum;
+}
+// one box line as text (shared by cart + WhatsApp message), localized
+function boxLineText(line){
+  const t = T[lang], sep = t.listSep, b = boxById(line.id);
+  let s = nameOf(b);
+  if(line.skewers) s += " — " + t.skewersLbl + ": " + line.skewers.map(id => nameOf(shishById(id))).join(sep);
+  s += " — " + t.saladLbl + ": " + nameOf(saladById(line.salad));
+  if(line.extras.length){
+    const counts = {};
+    line.extras.forEach(x => counts[x] = (counts[x]||0) + 1);
+    const ex = Object.entries(counts).map(([id,n]) => nameOf(shishById(id)) + (n>1 ? " ×"+n : "")).join(sep);
+    s += " + " + t.extraLbl + ": " + ex;
+  }
+  return s;
+}
+function orderLines(){
+  const lines = boxLines.map(line => "• " + boxLineText(line));
+  DRINKS.forEach(d => { const q = drinks[d.id]||0; if(q>0) lines.push("• " + nameOf(d) + " × " + q); });
+  return lines;
 }
 
-// ---- one card's stepper (rebuilt in place on +/- so the rest of the card is untouched) ----
-function stepperHTML(m){
-  const q = cart[m.id] || 0;
-  return q === 0
-    ? '<button class="qbtn addbtn plus" onclick="inc(\''+m.id+'\')">+</button>'
-    : '<div class="stepper">'
-      + '<button class="qbtn minus" onclick="dec(\''+m.id+'\')">−</button>'
-      + '<span class="qty">'+q+'</span>'
-      + '<button class="qbtn plus" onclick="inc(\''+m.id+'\')">+</button></div>';
+// ---- WhatsApp deep link (localized; items + choices + qty, plus total, delivery note, thanks) ----
+function waLink(){
+  const t = T[lang];
+  const msg = t.msgHeader
+    + "\n\n" + orderLines().join("\n")
+    + "\n\n" + t.totalLbl + ": " + fmt(orderTotal()) + " " + t.each
+    + "\n" + t.noDelivery
+    + "\n\n" + t.thanks;
+  return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
 }
 
 // ---- image shimmer helper ----
@@ -309,13 +455,13 @@ function imgLoaded(img){
   if(box) box.classList.remove("loading");
 }
 
-// ---- build the whole grid once (and on language change) ----
+// ---- build the boxes grid (staggered reveal, same as before) ----
 let io;
-function buildMenu(instant){
+function buildBoxes(instant){
   const t = T[lang], isAr = lang==="ar";
-  menuEl.innerHTML = MENU.map((m,i) => {
+  menuEl.innerHTML = BOXES.map((m,i) => {
     const desc = (isAr?m.dAr:m.dEn) || "";
-    const name = isAr?m.ar:m.en;
+    const name = nameOf(m);
     const img = m.img
       ? '<img src="'+m.img+'" alt="'+name+'" onload="imgLoaded(this)">'
       : PLACEHOLDER_SVG;
@@ -326,16 +472,14 @@ function buildMenu(instant){
         + '<div class="name">'+name+'</div>'
         + (desc ? '<p class="desc">'+desc+'</p>' : '<div style="flex:1"></div>')
         + '<div class="row"><div class="price">'+fmt(m.price)+' '+t.each+'</div>'
-          + '<div class="stepslot">'+stepperHTML(m)+'</div></div>'
+          + '<button class="qbtn addbtn choosebtn" onclick="openConfig(\''+m.id+'\')">'+t.choose+'</button></div>'
       + '</div></article>';
   }).join("");
 
-  // cached images may already be complete → mark them loaded so shimmer clears
   menuEl.querySelectorAll("img").forEach(img => {
     if(img.complete && img.naturalWidth) imgLoaded(img);
   });
 
-  // reveal: stagger on first paint, instant when just switching language
   const cards = [...menuEl.querySelectorAll(".card")];
   if(instant || reduceMotion || !("IntersectionObserver" in window)){
     cards.forEach(c => c.classList.add("in"));
@@ -350,7 +494,198 @@ function buildMenu(instant){
   cards.forEach(c => io.observe(c));
 }
 
-// ---- language-dependent text outside the grid ----
+// ---- drinks grid (simple +/- steppers) ----
+function drinkStepper(d){
+  const q = drinks[d.id] || 0;
+  return q === 0
+    ? '<button class="qbtn addbtn plus" onclick="drinkInc(\''+d.id+'\')">+</button>'
+    : '<div class="stepper">'
+      + '<button class="qbtn minus" onclick="drinkDec(\''+d.id+'\')">−</button>'
+      + '<span class="qty">'+q+'</span>'
+      + '<button class="qbtn plus" onclick="drinkInc(\''+d.id+'\')">+</button></div>';
+}
+function buildDrinks(){
+  const t = T[lang];
+  drinksEl.innerHTML = DRINKS.map(d =>
+    '<article class="card drink in" data-drink="'+d.id+'">'
+      + '<div class="cbody">'
+        + '<div class="name">'+nameOf(d)+'</div>'
+        + '<div class="row"><div class="price">'+fmt(d.price)+' '+t.each+'</div>'
+          + '<div class="stepslot" id="d_'+d.id+'">'+drinkStepper(d)+'</div></div>'
+      + '</div></article>'
+  ).join("");
+}
+function refreshDrink(id){
+  const slot = document.getElementById("d_"+id);
+  if(slot) slot.innerHTML = drinkStepper(drinkById(id));
+}
+function drinkInc(id){ drinks[id] = (drinks[id]||0)+1; refreshDrink(id); updateBar(); }
+function drinkDec(id){
+  drinks[id] = Math.max(0,(drinks[id]||0)-1);
+  if(!drinks[id]) delete drinks[id];
+  refreshDrink(id); updateBar();
+}
+
+/* ============ configure modal ============ */
+function skewerTotal(){ return Object.values(draft.skewers).reduce((s,n)=>s+n,0); }
+function draftValid(){
+  if(!draft || !draft.salad) return false;
+  if(boxById(draft.id).custom && skewerTotal() !== 6) return false;
+  return true;
+}
+function setSalad(sid){ draft.salad = sid; renderConfig(); }
+function extraChange(tid, delta){
+  draft.extras[tid] = Math.max(0,(draft.extras[tid]||0)+delta);
+  if(!draft.extras[tid]) delete draft.extras[tid];
+  renderConfig();
+}
+function skewerChange(tid, delta){
+  if(delta>0 && skewerTotal()>=6) return;
+  draft.skewers[tid] = Math.max(0,(draft.skewers[tid]||0)+delta);
+  if(!draft.skewers[tid]) delete draft.skewers[tid];
+  renderConfig();
+}
+function stepRow(name, minusFn, plusFn, q, plusDisabled){
+  return '<div class="cfg-row"><span class="cfg-name">'+name+'</span>'
+    + '<div class="stepper">'
+    + '<button class="qbtn minus" onclick="'+minusFn+'"'+(q===0?' disabled':'')+'>−</button>'
+    + '<span class="qty">'+q+'</span>'
+    + '<button class="qbtn plus" onclick="'+plusFn+'"'+(plusDisabled?' disabled':'')+'>+</button></div></div>';
+}
+function renderConfig(){
+  const t = T[lang], isAr = lang==="ar", b = boxById(draft.id);
+  const sheet = document.getElementById("configSheet");
+  sheet.dir = isAr ? "rtl" : "ltr";
+  let html = '<div class="sheet-head"><div>'
+    + '<div class="sheet-title">'+nameOf(b)+'</div>'
+    + '<div class="sheet-price">'+fmt(b.price)+' '+t.each+'</div></div>'
+    + '<button class="x" onclick="closeConfig()" aria-label="'+t.cancel+'">×</button></div>';
+  html += '<div class="sheet-body">';
+
+  // salad (required, every box)
+  html += '<div class="field"><div class="field-label">'+t.saladField+'</div><div class="opts">';
+  SALADS.forEach(s => {
+    html += '<button class="opt'+(draft.salad===s.id?' is-selected':'')+'" onclick="setSalad(\''+s.id+'\')">'+nameOf(s)+'</button>';
+  });
+  html += '</div></div>';
+
+  // customized: pick exactly 6 skewers
+  if(b.custom){
+    const total = skewerTotal();
+    html += '<div class="field"><div class="field-label">'+t.customField
+      + ' <span class="counter'+(total===6?' ok':'')+'">'+total+' '+t.ofSix+'</span></div>';
+    SHISH.forEach(s => {
+      const q = draft.skewers[s.id]||0;
+      html += stepRow(nameOf(s),
+        "skewerChange('"+s.id+"',-1)", "skewerChange('"+s.id+"',1)", q, total>=6);
+    });
+    html += '</div>';
+  }
+
+  // extra shish (every box)
+  html += '<div class="field"><div class="field-label">'+t.extraField+'</div>';
+  SHISH.forEach(s => {
+    const q = draft.extras[s.id]||0;
+    html += stepRow(nameOf(s),
+      "extraChange('"+s.id+"',-1)", "extraChange('"+s.id+"',1)", q, false);
+  });
+  html += '</div>';
+
+  html += '</div>'; // sheet-body
+
+  const valid = draftValid();
+  let hint = "";
+  if(!draft.salad) hint = t.pickSalad;
+  else if(b.custom && skewerTotal()!==6) hint = t.pickSix;
+  html += '<div class="sheet-foot">'
+    + (hint ? '<div class="hint">'+hint+'</div>' : '')
+    + '<div class="foot-btns">'
+    + '<button class="btn-ghost" onclick="closeConfig()">'+t.cancel+'</button>'
+    + '<button class="btn-primary" onclick="addConfiguredBox()"'+(valid?'':' disabled')+'>'+t.addToCart+'</button>'
+    + '</div></div>';
+  sheet.innerHTML = html;
+}
+function openConfig(id){
+  draft = { id:id, salad:null, extras:{}, skewers:{} };
+  renderConfig();
+  document.getElementById("configModal").classList.add("show");
+  document.body.classList.add("modal-open");
+}
+function closeConfig(){
+  document.getElementById("configModal").classList.remove("show");
+  if(!document.getElementById("cartModal").classList.contains("show"))
+    document.body.classList.remove("modal-open");
+  draft = null;
+}
+function addConfiguredBox(){
+  if(!draftValid()) return;
+  const b = boxById(draft.id);
+  const extras = [];
+  Object.entries(draft.extras).forEach(([tid,n]) => { for(let i=0;i<n;i++) extras.push(tid); });
+  let skewers = null;
+  if(b.custom){
+    skewers = [];
+    Object.entries(draft.skewers).forEach(([tid,n]) => { for(let i=0;i<n;i++) skewers.push(tid); });
+  }
+  boxLines.push({ uid:uidSeq++, id:draft.id, salad:draft.salad, extras, skewers });
+  closeConfig();
+  updateBar();
+}
+
+/* ============ cart modal ============ */
+function renderCart(){
+  const t = T[lang], isAr = lang==="ar";
+  const sheet = document.getElementById("cartSheet");
+  sheet.dir = isAr ? "rtl" : "ltr";
+  let html = '<div class="sheet-head"><div class="sheet-title">'+t.cartTitle+'</div>'
+    + '<button class="x" onclick="closeCart()" aria-label="'+t.cancel+'">×</button></div>';
+  html += '<div class="sheet-body">';
+  if(orderCount() === 0){
+    html += '<p class="empty">'+t.emptyCart+'</p>';
+  } else {
+    boxLines.forEach(line => {
+      html += '<div class="citem"><span class="citem-txt">'+boxLineText(line)+'</span>'
+        + '<button class="rm" onclick="removeLine('+line.uid+')" aria-label="'+t.remove+'">×</button></div>';
+    });
+    DRINKS.forEach(d => {
+      const q = drinks[d.id]||0;
+      if(q>0){
+        html += '<div class="citem"><span class="citem-txt">'+nameOf(d)+'</span>'
+          + '<div class="stepper sm">'
+          + '<button class="qbtn minus" onclick="drinkDec(\''+d.id+'\');renderCart()">−</button>'
+          + '<span class="qty">'+q+'</span>'
+          + '<button class="qbtn plus" onclick="drinkInc(\''+d.id+'\');renderCart()">+</button></div></div>';
+      }
+    });
+  }
+  html += '</div>';
+  html += '<div class="sheet-foot"><div class="foot-btns">'
+    + '<button class="btn-ghost" onclick="closeCart()">'+t.addMore+'</button>';
+  if(orderCount() > 0){
+    html += '<a class="btn-primary" href="'+waLink()+'" target="_blank" rel="noreferrer">'
+      + '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.5-.8-2.5-1.4-3.5-3.1-.3-.5.3-.4.8-1.4.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2z"/></svg>'
+      + '<span>'+t.order+'</span></a>';
+  }
+  html += '</div></div>';
+  sheet.innerHTML = html;
+}
+function openCart(){
+  renderCart();
+  document.getElementById("cartModal").classList.add("show");
+  document.body.classList.add("modal-open");
+}
+function closeCart(){
+  document.getElementById("cartModal").classList.remove("show");
+  if(!document.getElementById("configModal").classList.contains("show"))
+    document.body.classList.remove("modal-open");
+}
+function removeLine(uid){
+  boxLines = boxLines.filter(l => l.uid !== uid);
+  renderCart();
+  updateBar();
+}
+
+// ---- language-dependent text outside the grids ----
 function applyText(){
   const t = T[lang], a = ABOUT[lang], isAr = lang==="ar";
   document.body.dir = isAr ? "rtl" : "ltr";
@@ -359,6 +694,7 @@ function applyText(){
   document.getElementById("brand").textContent = isAr ? "منقل بوكس" : "Man'al Box";
   document.getElementById("tagline").textContent = t.tagline;
   document.getElementById("langbtn").textContent = t.langBtn;
+  document.getElementById("drinksTitle").textContent = t.drinksTitle;
 
   document.getElementById("aboutTitle").textContent = a.title;
   document.getElementById("aboutBody").textContent = a.body;
@@ -375,7 +711,7 @@ function applyText(){
 
 function updateBar(){
   const t = T[lang];
-  const count = Object.values(cart).reduce((s,n)=>s+n,0);
+  const count = orderCount();
   const bar = document.getElementById("orderbar");
   const countEl = document.getElementById("cartCount");
   if(countEl.textContent !== String(count) && !reduceMotion){
@@ -390,41 +726,32 @@ function updateBar(){
   else { bar.classList.remove("show"); document.body.classList.remove("cart-open"); }
 }
 
-// ---- update only the affected card (keeps hover/scroll state + lets us animate) ----
-function refreshCard(id, grew){
-  const card = menuEl.querySelector('[data-id="'+id+'"]');
-  if(!card) return;
-  const slot = card.querySelector(".stepslot");
-  const m = MENU.find(x => x.id === id);
-  slot.innerHTML = stepperHTML(m);
-  if(reduceMotion) return;
-  const qty = slot.querySelector(".qty");
-  if(qty){ qty.classList.remove("bump"); void qty.offsetWidth; qty.classList.add("bump"); }
-  if(grew){
-    const plus = slot.querySelector(".plus");
-    if(plus){ plus.classList.remove("pop"); void plus.offsetWidth; plus.classList.add("pop"); }
-  }
-}
-
-function inc(id){ cart[id] = (cart[id]||0)+1; refreshCard(id, true);  updateBar(); }
-function dec(id){ cart[id] = Math.max(0,(cart[id]||0)-1); refreshCard(id, false); updateBar(); }
-
 function toggleLang(){
   lang = lang==="ar" ? "en" : "ar";
   const page = document.querySelector(".page");
-  if(reduceMotion){ applyText(); buildMenu(true); updateBar(); return; }
-  page.classList.add("lang-fade");            // smooth EN↔AR crossfade
-  setTimeout(() => {
+  const apply = () => {
     applyText();
-    buildMenu(true);                          // clean RTL/LTR swap under the fade
+    buildBoxes(true);
+    buildDrinks();
     updateBar();
-    page.classList.remove("lang-fade");
-  }, 180);
+    // keep any open modal in sync with the new language
+    if(document.getElementById("configModal").classList.contains("show") && draft) renderConfig();
+    if(document.getElementById("cartModal").classList.contains("show")) renderCart();
+  };
+  if(reduceMotion){ apply(); return; }
+  page.classList.add("lang-fade");            // smooth EN↔AR crossfade
+  setTimeout(() => { apply(); page.classList.remove("lang-fade"); }, 180);
 }
+
+// close modals on Escape
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape"){ closeConfig(); closeCart(); }
+});
 
 // ---- initial paint ----
 applyText();
-buildMenu(false);
+buildBoxes(false);
+buildDrinks();
 updateBar();
 </script>
 </body>
