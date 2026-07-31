@@ -137,6 +137,7 @@
   .modal{position:fixed;inset:0;z-index:60;display:none;align-items:flex-end;justify-content:center;
     background:rgba(0,0,0,.62);backdrop-filter:blur(2px)}
   .modal.show{display:flex}
+  #configModal{z-index:70}   /* sits above the cart when editing a line */
   @media(min-width:640px){.modal{align-items:center;padding:24px}}
   .sheet{background:#181818;border:1px solid #262626;width:100%;max-width:520px;max-height:92vh;
     border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;
@@ -177,6 +178,9 @@
   .citem-txt{font-size:14px;line-height:1.5;color:#eaeaea}
   .rm{background:rgba(255,255,255,.1);border:none;color:#ff8080;width:30px;height:30px;flex:none;
     border-radius:15px;font-size:18px;cursor:pointer;font-family:inherit}
+  .citem-acts{display:flex;align-items:center;gap:8px;flex:none}
+  .edit{background:rgba(255,255,255,.1);border:none;color:#eaeaea;height:30px;padding:0 13px;
+    border-radius:15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
   .empty{color:#bdbdbd;font-size:15px;text-align:center;padding:24px 0}
   body.modal-open{overflow:hidden}
 
@@ -367,8 +371,9 @@ const T = {
     drinksTitle:"Drinks", choose:"Choose",
     saladField:"Choose your salad", extraField:"Extra shish (+150,000 L.L each)",
     customField:"Build your 6 skewers", ofSix:"of 6",
-    addToCart:"Add to cart", cancel:"Cancel", cartTitle:"Your order", addMore:"Add more",
-    emptyCart:"Your cart is empty", remove:"Remove",
+    addToCart:"Add to cart", saveChanges:"Save changes", cancel:"Cancel",
+    cartTitle:"Your order", addMore:"Add more",
+    emptyCart:"Your cart is empty", remove:"Remove", edit:"Edit",
     pickSalad:"Please choose a salad", pickSix:"Choose exactly 6 skewers",
     msgHeader:"New order — Man'al Box", saladLbl:"salad", extraLbl:"extra shish",
     skewersLbl:"skewers", totalLbl:"Total", noDelivery:"Price does not include delivery",
@@ -378,8 +383,9 @@ const T = {
     drinksTitle:"مشروبات", choose:"اختر",
     saladField:"اختر السلطة", extraField:"شيش إضافي (+150,000 ل.ل للسيخ)",
     customField:"اختر 6 أسياخ", ofSix:"من 6",
-    addToCart:"أضف إلى السلة", cancel:"إلغاء", cartTitle:"طلبك", addMore:"أضف المزيد",
-    emptyCart:"السلة فارغة", remove:"حذف",
+    addToCart:"أضف إلى السلة", saveChanges:"حفظ التعديلات", cancel:"إلغاء",
+    cartTitle:"طلبك", addMore:"أضف المزيد",
+    emptyCart:"السلة فارغة", remove:"حذف", edit:"تعديل",
     pickSalad:"يرجى اختيار السلطة", pickSix:"اختر 6 أسياخ بالضبط",
     msgHeader:"طلب جديد — منقل بوكس", saladLbl:"سلطة", extraLbl:"شيش إضافي",
     skewersLbl:"أسياخ", totalLbl:"المجموع", noDelivery:"السعر لا يشمل التوصيل",
@@ -600,15 +606,27 @@ function renderConfig(){
     + (hint ? '<div class="hint">'+hint+'</div>' : '')
     + '<div class="foot-btns">'
     + '<button class="btn-ghost" onclick="closeConfig()">'+t.cancel+'</button>'
-    + '<button class="btn-primary" onclick="addConfiguredBox()"'+(valid?'':' disabled')+'>'+t.addToCart+'</button>'
+    + '<button class="btn-primary" onclick="addConfiguredBox()"'+(valid?'':' disabled')+'>'+(draft.editUid?t.saveChanges:t.addToCart)+'</button>'
     + '</div></div>';
   sheet.innerHTML = html;
 }
-function openConfig(id){
-  draft = { id:id, salad:null, extras:{}, skewers:{} };
+function openConfig(id, editUid){
+  draft = { id:id, salad:null, extras:{}, skewers:{}, editUid: editUid || null };
+  if(editUid){
+    const line = boxLines.find(l => l.uid === editUid);
+    if(line){
+      draft.salad = line.salad;
+      line.extras.forEach(t => draft.extras[t] = (draft.extras[t]||0)+1);
+      if(line.skewers) line.skewers.forEach(t => draft.skewers[t] = (draft.skewers[t]||0)+1);
+    }
+  }
   renderConfig();
   document.getElementById("configModal").classList.add("show");
   document.body.classList.add("modal-open");
+}
+function editLine(uid){
+  const line = boxLines.find(l => l.uid === uid);
+  if(line) openConfig(line.id, uid);
 }
 function closeConfig(){
   document.getElementById("configModal").classList.remove("show");
@@ -626,9 +644,17 @@ function addConfiguredBox(){
     skewers = [];
     Object.entries(draft.skewers).forEach(([tid,n]) => { for(let i=0;i<n;i++) skewers.push(tid); });
   }
-  boxLines.push({ uid:uidSeq++, id:draft.id, salad:draft.salad, extras, skewers });
+  const editUid = draft.editUid;
+  if(editUid){
+    const line = boxLines.find(l => l.uid === editUid);
+    if(line){ line.salad = draft.salad; line.extras = extras; line.skewers = skewers; }
+  } else {
+    boxLines.push({ uid:uidSeq++, id:draft.id, salad:draft.salad, extras, skewers });
+  }
   closeConfig();
   updateBar();
+  // if the cart is open behind the config modal (edit flow), refresh it in place
+  if(document.getElementById("cartModal").classList.contains("show")) renderCart();
 }
 
 /* ============ cart modal ============ */
@@ -644,7 +670,10 @@ function renderCart(){
   } else {
     boxLines.forEach(line => {
       html += '<div class="citem"><span class="citem-txt">'+boxLineText(line)+'</span>'
-        + '<button class="rm" onclick="removeLine('+line.uid+')" aria-label="'+t.remove+'">×</button></div>';
+        + '<div class="citem-acts">'
+        + '<button class="edit" onclick="editLine('+line.uid+')">'+t.edit+'</button>'
+        + '<button class="rm" onclick="removeLine('+line.uid+')" aria-label="'+t.remove+'">×</button>'
+        + '</div></div>';
     });
     DRINKS.forEach(d => {
       const q = drinks[d.id]||0;
