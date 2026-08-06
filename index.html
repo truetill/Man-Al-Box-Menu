@@ -159,6 +159,13 @@
   .counter{font-size:12px;font-weight:700;background:rgba(255,255,255,.1);color:#bdbdbd;
     padding:3px 9px;border-radius:10px}
   .counter.ok{background:rgba(37,211,102,.16);color:#25D366}
+  .field-toggle{width:100%;min-height:44px;background:none;border:none;padding:0;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:700;color:#e6e6e6;text-align:start;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .field-toggle.is-open{margin-bottom:10px}
+  .field-toggle .ft-txt{flex:1}
+  .chev{flex:none;font-size:12px;color:#bdbdbd;transition:transform .2s;transform:rotate(-90deg)}
+  .field-toggle.is-open .chev{transform:rotate(0deg)}
   .cfg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}
   .cfg-row:first-of-type{border-top:none}
@@ -369,25 +376,25 @@ const T = {
   en:{ tagline:"Lebanese BBQ · grill-at-home boxes", order:"Order on WhatsApp",
     each:"L.L", items:"items", langBtn:"عربي", copyright:"All rights reserved",
     drinksTitle:"Drinks", choose:"Choose",
-    saladField:"Choose your salad", extraField:"Extra shish (+150,000 L.L each)",
+    saladField:"Choose your salad", extraField:"Addons (+150,000 L.L each)",
     customField:"Build your 6 skewers", ofSix:"of 6",
     addToCart:"Add to cart", saveChanges:"Save changes", cancel:"Cancel",
     cartTitle:"Your order", addMore:"Add more",
     emptyCart:"Your cart is empty", remove:"Remove", edit:"Edit",
     pickSalad:"Please choose a salad", pickSix:"Choose exactly 6 skewers",
-    msgHeader:"New order — Man'al Box", saladLbl:"Salad", extraLbl:"Extra shish",
+    msgHeader:"New order — Man'al Box", saladLbl:"Salad", extraLbl:"Addons",
     skewersLbl:"Skewers", totalLbl:"Total", noDelivery:"Price does not include delivery",
     thanks:"Thanks! We'll contact you to confirm your order 🔥", listSep:", " },
   ar:{ tagline:"مشاوي لبنانية · بوكسات شوي بالبيت", order:"اطلب عبر واتساب",
     each:"ل.ل", items:"عناصر", langBtn:"EN", copyright:"جميع الحقوق محفوظة",
     drinksTitle:"مشروبات", choose:"اختر",
-    saladField:"اختر السلطة", extraField:"شيش إضافي (+150,000 ل.ل للسيخ)",
+    saladField:"اختر السلطة", extraField:"إضافات (+150,000 ل.ل للسيخ)",
     customField:"اختر 6 أسياخ", ofSix:"من 6",
     addToCart:"أضف إلى السلة", saveChanges:"حفظ التعديلات", cancel:"إلغاء",
     cartTitle:"طلبك", addMore:"أضف المزيد",
     emptyCart:"السلة فارغة", remove:"حذف", edit:"تعديل",
     pickSalad:"يرجى اختيار السلطة", pickSix:"اختر 6 أسياخ بالضبط",
-    msgHeader:"طلب جديد — منقل بوكس", saladLbl:"سلطة", extraLbl:"شيش إضافي",
+    msgHeader:"طلب جديد — منقل بوكس", saladLbl:"سلطة", extraLbl:"إضافات",
     skewersLbl:"أسياخ", totalLbl:"المجموع", noDelivery:"السعر لا يشمل التوصيل",
     thanks:"شكراً! رح نتواصل معك لتأكيد الطلب 🔥", listSep:"، " },
 };
@@ -544,12 +551,14 @@ function drinkDec(id){
 
 /* ============ configure modal ============ */
 function skewerTotal(){ return Object.values(draft.skewers).reduce((s,n)=>s+n,0); }
+function extraTotal(){ return Object.values(draft.extras).reduce((s,n)=>s+n,0); }
 function draftValid(){
   if(!draft || !draft.salad) return false;
   if(boxById(draft.id).custom && skewerTotal() !== 6) return false;
   return true;
 }
 function setSalad(sid){ draft.salad = sid; renderConfig(); }
+function toggleExtras(){ draft.extrasOpen = !draft.extrasOpen; renderConfig(); }
 function extraChange(tid, delta){
   draft.extras[tid] = Math.max(0,(draft.extras[tid]||0)+delta);
   if(!draft.extras[tid]) delete draft.extras[tid];
@@ -598,13 +607,21 @@ function renderConfig(){
     html += '</div>';
   }
 
-  // extra shish (every box)
-  html += '<div class="field"><div class="field-label">'+t.extraField+'</div>';
-  SHISH.forEach(s => {
-    const q = draft.extras[s.id]||0;
-    html += stepRow(nameOf(s),
-      "extraChange('"+s.id+"',-1)", "extraChange('"+s.id+"',1)", q, false);
-  });
+  // addons — collapsed by default (every box)
+  const eTotal = extraTotal(), eOpen = !!draft.extrasOpen;
+  html += '<div class="field">'
+    + '<button class="field-toggle'+(eOpen?' is-open':'')+'" onclick="toggleExtras()"'
+    + ' aria-expanded="'+(eOpen?'true':'false')+'">'
+    + '<span class="ft-txt">'+t.extraField+'</span>'
+    + (eTotal ? '<span class="counter ok">'+eTotal+'</span>' : '')
+    + '<span class="chev">▾</span></button>';
+  if(eOpen){
+    SHISH.forEach(s => {
+      const q = draft.extras[s.id]||0;
+      html += stepRow(nameOf(s),
+        "extraChange('"+s.id+"',-1)", "extraChange('"+s.id+"',1)", q, false);
+    });
+  }
   html += '</div>';
 
   html += '</div>'; // sheet-body
@@ -622,12 +639,13 @@ function renderConfig(){
   sheet.innerHTML = html;
 }
 function openConfig(id, editUid){
-  draft = { id:id, salad:null, extras:{}, skewers:{}, editUid: editUid || null };
+  draft = { id:id, salad:null, extras:{}, skewers:{}, extrasOpen:false, editUid: editUid || null };
   if(editUid){
     const line = boxLines.find(l => l.uid === editUid);
     if(line){
       draft.salad = line.salad;
       line.extras.forEach(t => draft.extras[t] = (draft.extras[t]||0)+1);
+      draft.extrasOpen = line.extras.length > 0;   // show existing addons when editing
       if(line.skewers) line.skewers.forEach(t => draft.skewers[t] = (draft.skewers[t]||0)+1);
     }
   }
