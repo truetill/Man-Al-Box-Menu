@@ -74,7 +74,8 @@
   .card.in:hover .imgbox img{transform:scale(1.05)}
   .imgbox svg{width:42%;height:42%;stroke:rgba(255,255,255,.35)}
   /* image loading shimmer until each photo loads */
-  .imgbox.loading::before{content:"";position:absolute;inset:0;z-index:0;
+  .imgbox.loading::before,
+  .sheet-hero.loading::before{content:"";position:absolute;inset:0;z-index:0;
     background:linear-gradient(100deg,#181818 25%,#242424 45%,#181818 65%);
     background-size:200% 100%;animation:shimmer 1.3s linear infinite}
   .cbody{padding:16px 18px;display:flex;flex-direction:column;flex:1}
@@ -149,6 +150,11 @@
   .sheet-price{font-size:14px;color:#ff6b6b;font-weight:600;margin-top:2px}
   .sheet .x{background:rgba(255,255,255,.1);border:none;color:#fafafa;width:34px;height:34px;
     border-radius:17px;font-size:22px;line-height:1;cursor:pointer;flex:none;font-family:inherit}
+  .sheet-hero{aspect-ratio:4/3;background:#121212;border:1px solid #262626;border-radius:14px;
+    overflow:hidden;position:relative;flex:none}
+  .sheet-hero img{width:100%;height:100%;object-fit:cover;opacity:1;transition:opacity .35s ease}
+  .sheet-hero img.fade{opacity:0}
+  .sheet-hero img.fade.loaded{opacity:1}
   .sheet-body{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
   .field-label{font-size:14px;font-weight:700;color:#e6e6e6;margin-bottom:10px;display:flex;
     align-items:center;gap:8px;flex-wrap:wrap}
@@ -307,28 +313,28 @@ const INSTAGRAM = "https://www.instagram.com/man2albox.lb";
       type changes. Prices are in Lebanese pounds (L.L).
    ========================================================= */
 const BOXES = [
-  { id:"beef",    en:"Beef Box",    ar:"بوكس لحمة",  price:1700000, img:"box.png",
+  { id:"beef",    en:"Beef Box",    ar:"بوكس لحمة",  price:1700000, imgs:{fattoush:"img/beef-fattoush.webp", tabbouleh:"img/beef-tabbouleh.webp"},
     dEn:"6 beef skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ لحمة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"kafta",   en:"Kafta Box",   ar:"بوكس كفتة",  price:1400000, img:"box.png",
+  { id:"kafta",   en:"Kafta Box",   ar:"بوكس كفتة",  price:1400000, imgs:{fattoush:"img/kafta-fattoush.webp", tabbouleh:"img/kafta-tabbouleh.webp"},
     dEn:"6 kafta skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ كفتة مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"makanek", en:"Makanek Box", ar:"بوكس مقانق", price:1400000, img:"box.png",
+  { id:"makanek", en:"Makanek Box", ar:"بوكس مقانق", price:1400000, imgs:{fattoush:"img/makanek-fattoush.webp", tabbouleh:"img/makanek-tabbouleh.webp"},
     dEn:"6 makanek skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ مقانق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"sejouk",  en:"Sejouk Box",  ar:"بوكس سجق",   price:1400000, img:"box.png",
+  { id:"sejouk",  en:"Sejouk Box",  ar:"بوكس سجق",   price:1400000, imgs:{fattoush:"img/sejouk-fattoush.webp", tabbouleh:"img/sejouk-tabbouleh.webp"},
     dEn:"6 sejouk skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ سجق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"tawouk",  en:"Tawouk Box",  ar:"بوكس طاووق", price:1250000, img:"box.png",
+  { id:"tawouk",  en:"Tawouk Box",  ar:"بوكس طاووق", price:1250000, imgs:{fattoush:"img/tawouk-fattoush.webp", tabbouleh:"img/tawouk-tabbouleh.webp"},
     dEn:"6 tawouk skewers with your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ طاووق مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"mix",     en:"Mix Box",     ar:"بوكس مكس",   price:1500000, img:"box.png",
+  { id:"mix",     en:"Mix Box",     ar:"بوكس مكس",   price:1500000, imgs:{fattoush:"img/mix-fattoush.webp", tabbouleh:"img/mix-tabbouleh.webp"},
     dEn:"6 skewers: beef, kafta, tawouk. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ: لحمة، كفتة، طاووق. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"mixpro",  en:"Mix Pro Box", ar:"بوكس مكس برو", price:1700000, img:"box.png",
+  { id:"mixpro",  en:"Mix Pro Box", ar:"بوكس مكس برو", price:1700000, imgs:{fattoush:"img/mixpro-fattoush.webp", tabbouleh:"img/mixpro-tabbouleh.webp"},
     dEn:"6 skewers: beef, kafta, tawouk, sejouk, makanek. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"6 أسياخ: لحمة، كفتة، طاووق، سجق، مقانق. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
-  { id:"custom",  en:"Customized Box", ar:"بوكس مخصّص", price:1700000, img:"box.png", custom:true,
+  { id:"custom",  en:"Customized Box", ar:"بوكس مخصّص", price:1700000, imgs:{fattoush:"img/mixpro-fattoush.webp", tabbouleh:"img/mixpro-tabbouleh.webp"}, custom:true,
     dEn:"Choose your 6 skewers. With your choice of tabbouleh or fattoush, pickles, garlic, hummus, and bread. Includes grill, charcoal, charcoal cooler, gloves, and grabber.",
     dAr:"اختر 6 أسياخ. مع تبولة أو فتوش، كبيس، ثوم، حمص، وخبز. يشمل الشواية، الفحم، مبرّد الفحم، الكفوف، والملقط." },
 ];
@@ -405,6 +411,7 @@ let boxLines = [];        // configured box line items: {uid,id,salad,extras[],s
 let drinks = {};          // drinkId -> qty
 let uidSeq = 1;
 let draft = null;         // in-progress config: {id, salad, extras:{}, skewers:{}}
+let lastHeroSrc = null;   // photo currently shown in the configure sheet
 const fmt = n => n.toLocaleString("en-US").replace(/,/g,".");
 const PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M6 3v6a3 3 0 006 0V3M9 3v18M15 3c-1 3-1 6 0 8v10" stroke-linecap="round"/></svg>';
 const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -414,6 +421,8 @@ const boxById   = id => BOXES.find(b => b.id === id);
 const shishById = id => SHISH.find(s => s.id === id);
 const saladById = id => SALADS.find(s => s.id === id);
 const drinkById = id => DRINKS.find(d => d.id === id);
+// box photo for a given salad (falls back to the fattoush shot before a salad is picked)
+const imgOf = (b, salad) => b.imgs ? (b.imgs[salad] || b.imgs.fattoush) : null;
 const nameOf = o => (lang === "ar" ? o.ar : o.en);
 
 const menuEl   = document.getElementById("menu");
@@ -474,7 +483,7 @@ function waLink(){
 // ---- image shimmer helper ----
 function imgLoaded(img){
   img.classList.add("loaded");
-  const box = img.closest(".imgbox");
+  const box = img.closest(".imgbox, .sheet-hero");
   if(box) box.classList.remove("loading");
 }
 
@@ -485,10 +494,11 @@ function buildBoxes(instant){
   menuEl.innerHTML = BOXES.map((m,i) => {
     const desc = (isAr?m.dAr:m.dEn) || "";
     const name = nameOf(m);
-    const img = m.img
-      ? '<img src="'+m.img+'" alt="'+name+'" onload="imgLoaded(this)">'
+    const src = imgOf(m, null);
+    const img = src
+      ? '<img src="'+src+'" alt="'+name+'" loading="lazy" onload="imgLoaded(this)">'
       : PLACEHOLDER_SVG;
-    const boxClass = m.img ? "imgbox loading" : "imgbox";
+    const boxClass = src ? "imgbox loading" : "imgbox";
     return '<article class="card" data-id="'+m.id+'" style="--i:'+i+'">'
       + '<div class="'+boxClass+'">'+img+'</div>'
       + '<div class="cbody">'
@@ -587,6 +597,16 @@ function renderConfig(){
     + '<button class="x" onclick="closeConfig()" aria-label="'+t.cancel+'">×</button></div>';
   html += '<div class="sheet-body">';
 
+  // hero photo — swaps to match the salad the customer picks
+  const heroSrc = imgOf(b, draft.salad);
+  if(heroSrc){
+    const changed = heroSrc !== lastHeroSrc;   // only fade when the photo actually changes
+    lastHeroSrc = heroSrc;
+    html += '<div class="sheet-hero'+(changed?' loading':'')+'">'
+      + '<img src="'+heroSrc+'" alt="'+nameOf(b)+'"'+(changed?' class="fade"':'')
+      + ' onload="imgLoaded(this)"></div>';
+  }
+
   // salad (required, every box)
   html += '<div class="field"><div class="field-label">'+t.saladField+'</div><div class="opts">';
   SALADS.forEach(s => {
@@ -637,9 +657,13 @@ function renderConfig(){
     + '<button class="btn-primary" onclick="addConfiguredBox()"'+(valid?'':' disabled')+'>'+(draft.editUid?t.saveChanges:t.addToCart)+'</button>'
     + '</div></div>';
   sheet.innerHTML = html;
+  sheet.querySelectorAll(".sheet-hero img").forEach(im => {
+    if(im.complete && im.naturalWidth) imgLoaded(im);
+  });
 }
 function openConfig(id, editUid){
   draft = { id:id, salad:null, extras:{}, skewers:{}, extrasOpen:false, editUid: editUid || null };
+  lastHeroSrc = null;
   if(editUid){
     const line = boxLines.find(l => l.uid === editUid);
     if(line){
